@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Point search engines to your sitemap (replace with your real domain)
+Sitemap: https://elinfection.vercel.app/#ask
