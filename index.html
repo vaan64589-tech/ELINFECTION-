@@ -231,6 +231,7 @@ footer strong{color:var(--amber)}
 })();
 
 
+
 /* ---- Elinfection AI Chat ---- */
 (function () {
   "use strict";
@@ -266,7 +267,6 @@ footer strong{color:var(--amber)}
     "اللحظات الخمس لنظافة اليدين"
   ];
 
-  // إضافة الأسئلة المقترحة
   suggestions.forEach(function (text) {
     const button = document.createElement("button");
     button.type = "button";
@@ -274,6 +274,7 @@ footer strong{color:var(--amber)}
     button.textContent = text;
 
     button.addEventListener("click", function () {
+      if (busy) return;
       q.value = text;
       send();
     });
@@ -281,7 +282,6 @@ footer strong{color:var(--amber)}
     chips.appendChild(button);
   });
 
-  // منع عرض HTML غير موثوق داخل المحادثة
   function escapeHTML(text) {
     return String(text)
       .replace(/&/g, "&amp;")
@@ -290,6 +290,164 @@ footer strong{color:var(--amber)}
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
+
+  function formatText(text) {
+    return escapeHTML(text)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+  }
+
+  function addMessage(type, text) {
+    const bubble = document.createElement("div");
+    bubble.className = "m " + type;
+    bubble.innerHTML = formatText(text);
+
+    log.appendChild(bubble);
+    log.scrollTop = log.scrollHeight;
+
+    return bubble;
+  }
+
+  async function send() {
+    const question = q.value.trim();
+
+    if (!question || busy) return;
+
+    busy = true;
+    go.disabled = true;
+    q.disabled = true;
+    go.textContent = "جاري الإرسال...";
+
+    addMessage("u", question);
+
+    q.value = "";
+    q.style.height = "";
+
+    if (chips) chips.style.display = "none";
+
+    const loading = addMessage("a", "جاري تجهيز الإجابة...");
+    const oldHistory = history.slice();
+
+    history.push({
+      role: "user",
+      content: question
+    });
+
+    const controller = new AbortController();
+    const timeout = setTimeout(function () {
+      controller.abort();
+    }, 60000);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          system: SYSTEM_PROMPT,
+          messages: history.slice(-12)
+        }),
+        signal: controller.signal
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        const details = await response.text();
+
+        console.error(
+          "Elinfection server returned non-JSON:",
+          response.status,
+          details.slice(0, 1000)
+        );
+
+        if (response.status === 404) {
+          throw new Error(
+            "مسار المساعد غير موجود (404). تأكد أن الملف موجود في api/chat.js ثم أعد نشر الموقع."
+          );
+        }
+
+        throw new Error(
+          "الخادم لم يُرجع JSON صالحًا. كود الاستجابة: " +
+          response.status +
+          ". راجع إعدادات النشر ومسار API."
+        );
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Elinfection API error:", response.status, data);
+
+        throw new Error(
+          data.error ||
+          "فشل الاتصال بالمساعد. كود الخطأ: " + response.status
+        );
+      }
+
+      if (!data || typeof data.reply !== "string" || !data.reply.trim()) {
+        console.error("Invalid AI response:", data);
+
+        throw new Error(
+          "الخادم استجاب، لكن الرد النصي غير موجود. راجع سجل أخطاء API."
+        );
+      }
+
+      const answer = data.reply.trim();
+
+      loading.innerHTML = formatText(answer);
+
+      history.push({
+        role: "assistant",
+        content: answer
+      });
+
+      history = history.slice(-12);
+
+    } catch (error) {
+      history = oldHistory;
+      loading.classList.add("err");
+
+      if (error.name === "AbortError") {
+        loading.textContent =
+          "انتهت مهلة انتظار الرد بعد 60 ثانية. تحقق من اتصال الموقع بالخادم وحاول مرة أخرى.";
+      } else if (error instanceof TypeError) {
+        loading.textContent =
+          "تعذر الاتصال بخادم المساعد. تحقق من الإنترنت، ومسار /api/chat، ثم حاول مرة أخرى.";
+      } else {
+        loading.textContent =
+          error.message || "حدث خطأ غير متوقع أثناء إرسال السؤال.";
+      }
+
+      console.error("Elinfection AI request failed:", error);
+
+    } finally {
+      clearTimeout(timeout);
+      busy = false;
+      go.disabled = false;
+      q.disabled = false;
+      go.textContent = "إرسال";
+      log.scrollTop = log.scrollHeight;
+      q.focus();
+    }
+  }
+
+  go.addEventListener("click", send);
+
+  q.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      send();
+    }
+  });
+
+  q.addEventListener("input", function () {
+    q.style.height = "auto";
+    q.style.height = Math.min(q.scrollHeight, 140) + "px";
+  });
+})();
 
   // تنسيق بسيط وآمن للإجابة
   function formatText(text) {
