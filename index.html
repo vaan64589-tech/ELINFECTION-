@@ -230,62 +230,195 @@ footer strong{color:var(--amber)}
   frame();
 })();
 
-/* ---- AI chat ---- */
-(function(){
-  var SYS="أنت Elinfection، مساعد ذكاء اصطناعي متخصص في المجال الطبي ومكافحة العدوى والأمراض المعدية والتعقيم والصحة العامة والأدوية واللقاحات والتحاليل. "+
-  "جاوب بنفس لغة السائل. لو كتب بالعربي استخدم عربية بسيطة وواضحة تقبل لمسة مصرية خفيفة. "+
-  "اكتب إجابات منظمة: ابدأ بالخلاصة، ثم تفاصيل مختصرة بنقاط، ثم علامات الخطر ومتى يجب زيارة الطبيب. "+
-  "لا تقدّم تشخيصاً قاطعاً ولا جرعات علاجية مخصصة لشخص بعينه، وانصح بمراجعة الطبيب أو الصيدلي عند الحاجة. "+
-  "في الحالات الطارئة انصح بالاتصال بالإسعاف فوراً (123 في مصر). "+
-  "اعتمد على معلومات طبية موثوقة (WHO، CDC، الإرشادات المعتمدة) ولو مش متأكد قل ذلك صراحة. "+
-  "لو السؤال خارج المجال الطبي والصحي اعتذر بلطف ووجّه السائل لمجالك.";
-  var log=document.getElementById("log"),q=document.getElementById("q"),go=document.getElementById("go"),chips=document.getElementById("chips");
-  var hist=[],busy=false,sample=null,tried=false;
-  ["إزاي أمنع انتقال العدوى في البيت؟","الفرق بين التعقيم والتطهير","امتى أخد مضاد حيوي؟","أعراض الإنفلونزا والفرق بينها وبين كورونا","خطوات غسل الإيدين الصحيح للعاملين في المجال الطبي"].forEach(function(t){
-    var b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=function(){q.value=t;send()};chips.appendChild(b)});
 
-  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-  function inl(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")}
-  function md(t){
-    var out=[],lines=t.split("\n"),list=null;
-    function close(){if(list){out.push("</"+list+">");list=null}}
-    lines.forEach(function(l){
-      var m;
-      if((m=l.match(/^\s*#{1,4}\s+(.*)/))){close();out.push("<h4>"+inl(m[1])+"</h4>")}
-      else if((m=l.match(/^\s*[-*•]\s+(.*)/))){if(list!=="ul"){close();out.push("<ul>");list="ul"}out.push("<li>"+inl(m[1])+"</li>")}
-      else if((m=l.match(/^\s*\d+[.)]\s+(.*)/))){if(list!=="ol"){close();out.push("<ol>");list="ol"}out.push("<li>"+inl(m[1])+"</li>")}
-      else if(l.trim()===""){close()}
-      else{close();out.push("<p>"+inl(l)+"</p>")}});
-    close();return out.join("")}
-  function add(cls,html){var d=document.createElement("div");d.className="m "+cls;d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+/* ---- Elinfection AI Chat ---- */
+(function () {
+  "use strict";
 
-  async function send(){
-    var text=q.value.trim();if(!text||busy)return;
-    busy=true;go.disabled=true;q.value="";q.style.height="";chips.style.display="none";
-    add("u","<p>"+esc(text)+"</p>");
-    var bub=add("a",'<span class="dots"><i></i><i></i><i></i></span>');
-    try{
-      if(!tried){tried=true;try{sample=await claude.use("sample")}catch(e){sample=null}}
-      if(!sample)throw {code:"none"};
-      hist.push({role:"user",content:text});
-      var recent=hist.slice(-10);
-      if(recent[0].role!=="user")recent=recent.slice(1);
-      var msgs=recent.map(function(m,i){return i===0?{role:"user",content:SYS+"\n\n---\n"+m.content}:m});
-      var res=await sample(msgs,{cache:false,modelTier:"default",onText:function(o){bub.innerHTML=md(o.text);log.scrollTop=log.scrollHeight}});
-      bub.innerHTML=md(res.text);hist.push({role:"assistant",content:res.text});
-    }catch(e){
-      if(hist.length&&hist[hist.length-1].role==="user")hist.pop();
-      var msg=e&&e.code==="rate_limited"?"فيه ضغط كبير دلوقتي. استنى شوية وحاول تاني.":
-        e&&(e.code==="not_granted"||e.code==="none")?"المساعد محتاج موافقتك على تشغيل الذكاء الاصطناعي في الصفحة. وافق وحاول تاني.":
-        "حصلت مشكلة في الاتصال. حاول تاني بعد لحظات.";
-      bub.className="m a err";bub.innerHTML="<p>"+msg+"</p>";
-    }
-    busy=false;go.disabled=false;q.focus();
+  const log = document.getElementById("log");
+  const q = document.getElementById("q");
+  const go = document.getElementById("go");
+  const chips = document.getElementById("chips");
+
+  const SYSTEM_PROMPT = `
+أنت Elinfection AI، مساعد متخصص في مكافحة العدوى والأمراض المعدية
+والتعقيم والتطهير والصحة العامة والمعلومات الطبية.
+
+أجب بلغة السائل، واستخدم العربية المصرية البسيطة عند السؤال بالعربية.
+نظّم الإجابة في نقاط واضحة، وابدأ بالخلاصة.
+اشرح المصطلحات الطبية الإنجليزية عند الحاجة.
+اعتمد على الإرشادات الطبية الموثوقة مثل WHO وCDC.
+لا تخترع مصادر أو معلومات، ووضح عدم اليقين عند الحاجة.
+لا تدّع تشخيص المريض ولا تصف علاجًا شخصيًا أو جرعات مخصصة.
+وضح علامات الخطر ومتى يجب طلب المساعدة الطبية.
+في حالات الطوارئ، وجّه السائل إلى الطوارئ أو الإسعاف 123 في مصر.
+المعلومات للتوعية ولا تغني عن استشارة الطبيب.
+`;
+
+  let history = [];
+  let busy = false;
+
+  const suggestions = [
+    "إزاي أمنع انتقال العدوى في البيت؟",
+    "الفرق بين التعقيم والتطهير",
+    "إمتى أحتاج مضاد حيوي؟",
+    "أعراض الإنفلونزا والفرق بينها وبين كورونا",
+    "اللحظات الخمس لنظافة اليدين"
+  ];
+
+  // إضافة الأسئلة المقترحة
+  suggestions.forEach(function (text) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "chip";
+    button.textContent = text;
+
+    button.addEventListener("click", function () {
+      q.value = text;
+      send();
+    });
+
+    chips.appendChild(button);
+  });
+
+  // منع عرض HTML غير موثوق داخل المحادثة
+  function escapeHTML(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
-  go.onclick=send;
-  q.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
-  q.addEventListener("input",function(){q.style.height="auto";q.style.height=Math.min(q.scrollHeight,140)+"px"});
+
+  // تنسيق بسيط وآمن للإجابة
+  function formatText(text) {
+    return escapeHTML(text)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+  }
+
+  // إضافة رسالة للمحادثة
+  function addMessage(type, text) {
+    const bubble = document.createElement("div");
+    bubble.className = "m " + type;
+    bubble.innerHTML = formatText(text);
+
+    log.appendChild(bubble);
+    log.scrollTop = log.scrollHeight;
+
+    return bubble;
+  }
+
+  // إرسال السؤال واستقبال الرد
+  async function send() {
+    const question = q.value.trim();
+
+    if (!question || busy) return;
+
+    busy = true;
+    go.disabled = true;
+    q.disabled = true;
+
+    addMessage("u", question);
+
+    q.value = "";
+    q.style.height = "";
+
+    if (chips) {
+      chips.style.display = "none";
+    }
+
+    const loading = addMessage("a", "جاري تجهيز الإجابة...");
+
+    const oldHistory = history.slice();
+
+    history.push({
+      role: "user",
+      content: question
+    });
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          system: SYSTEM_PROMPT,
+          messages: history.slice(-12)
+        })
+      });
+
+      let data;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          "تعذر قراءة رد الخادم. تأكد من نشر ملف api/chat.js."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "تعذر الاتصال بالمساعد. حاول مرة أخرى."
+        );
+      }
+
+      if (
+        !data ||
+        typeof data.reply !== "string" ||
+        !data.reply.trim()
+      ) {
+        throw new Error("لم يصل رد صالح من نموذج الذكاء الاصطناعي.");
+      }
+
+      const answer = data.reply.trim();
+
+      loading.innerHTML = formatText(answer);
+
+      history.push({
+        role: "assistant",
+        content: answer
+      });
+
+      // الاحتفاظ بآخر الرسائل لتقليل حجم الطلبات
+      history = history.slice(-12);
+
+    } catch (error) {
+      history = oldHistory;
+
+      loading.classList.add("err");
+      loading.textContent =
+        error.message ||
+        "حصلت مشكلة في الاتصال. حاول مرة أخرى.";
+
+      console.error("Elinfection AI:", error);
+
+    } finally {
+      busy = false;
+      go.disabled = false;
+      q.disabled = false;
+      q.focus();
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+
+  go.addEventListener("click", send);
+
+  // إرسال السؤال بالضغط على Enter
+  q.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      send();
+    }
+  });
+
+  // ضبط ارتفاع مربع الكتابة
+  q.addEventListener("input", function () {
+    q.style.height = "auto";
+    q.style.height =
+      Math.min(q.scrollHeight, 140) + "px";
+  });
 })();
-</script>
-</body>
-</html>
