@@ -5,390 +5,368 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#050b12">
-<meta name="description" content="Elinfection AI - مساعد ذكي متخصص في مكافحة العدوى والأمراض المعدية والصحة العامة.">
 <title>Elinfection | مساعدك الذكي لمكافحة العدوى</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=Tajawal:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-
 <style>
-:root {
-  color-scheme: dark;
-  --bg: #050b12;
-  --bg2: #0a1622;
-  --ink: #e8f1f2;
-  --mute: #8fa5ad;
-  --glow: #4fe3d0;
-  --amber: #ffb347;
-  --line: rgba(120,200,210,.16);
-  --card: rgba(12,26,38,.85);
-  box-sizing: border-box;
-}
-*,*::before,*::after { box-sizing: inherit; }
-html {
-  scroll-behavior: smooth;
-  scroll-padding-top: env(safe-area-inset-top,0px);
-}
-body {
-  margin: 0;
-  padding-top: env(safe-area-inset-top,0px);
-  background: var(--bg);
-  color: var(--ink);
-  font-family: "Tajawal",system-ui,sans-serif;
-  line-height: 1.8;
-  font-size: 17px;
-}
-a { color: inherit; }
-button,textarea { font-family: inherit; }
-:focus-visible {
-  outline: 2px solid var(--glow);
-  outline-offset: 3px;
-}
-.hero {
-  position: relative;
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  overflow: hidden;
-  padding: 12vh 22px;
-}
-#cv { position:absolute; inset:0; width:100%; height:100%; }
-.hero::before,.hero::after {
-  content:"";
-  position:absolute;
-  inset-inline:0;
-  height:9vh;
-  background:#000;
-  z-index:3;
-  pointer-events:none;
-}
-.hero::before { top:0; }
-.hero::after { bottom:0; }
-.vig {
-  position:absolute;
-  inset:0;
-  background:radial-gradient(ellipse at 50% 45%,transparent 30%,rgba(2,5,9,.85) 100%);
-  z-index:1;
-  pointer-events:none;
-}
-.grain {
-  position:fixed;
-  inset:0;
-  z-index:50;
-  pointer-events:none;
-  opacity:.07;
-  mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-.hero-in { position:relative; z-index:2; max-width:860px; }
-.logo {
-  font-family:"Syne",sans-serif;
-  font-weight:800;
-  font-size:clamp(46px,13vw,132px);
-  line-height:1;
-  letter-spacing:-.02em;
-  margin:0;
-  direction:ltr;
-  background:linear-gradient(180deg,#fff 20%,var(--glow) 130%);
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  filter:drop-shadow(0 0 30px rgba(79,227,208,.35));
-}
-.logo span {
-  display:inline-block;
-  opacity:0;
-  transform:translateY(40px);
-  filter:blur(12px);
-  animation:rise 1.1s cubic-bezier(.2,.7,.2,1) forwards;
-}
-@keyframes rise {
-  to { opacity:1; transform:none; filter:none; }
-}
-.tag {
-  font-family:"Reem Kufi",sans-serif;
-  font-size:clamp(22px,4.6vw,40px);
-  margin:22px 0 10px;
-  font-weight:700;
-  opacity:0;
-  animation:fade 1.2s 1.5s forwards;
-}
-.sub {
-  color:var(--mute);
-  max-width:560px;
-  margin:0 auto 34px;
-  opacity:0;
-  animation:fade 1.2s 2s forwards;
-}
-.cta { opacity:0; animation:fade 1.2s 2.5s forwards; }
-@keyframes fade { to { opacity:1; } }
-.btn {
-  display:inline-block;
-  background:var(--amber);
-  color:#1a1005;
-  font-weight:700;
-  font-size:18px;
-  padding:14px 34px;
-  border:0;
-  border-radius:999px;
-  cursor:pointer;
-  text-decoration:none;
-  box-shadow:0 0 0 0 rgba(255,179,71,.5);
-  transition:box-shadow .3s,transform .2s;
-}
-.btn:hover {
-  box-shadow:0 0 0 10px rgba(255,179,71,.14);
-  transform:translateY(-2px);
-}
-.btn:disabled { opacity:.55; cursor:wait; transform:none; }
-.hint {
-  position:absolute;
-  bottom:12vh;
-  z-index:2;
-  color:var(--mute);
-  font-size:14px;
-  opacity:0;
-  animation:fade 1s 3.2s forwards;
-}
-section { padding:90px 22px; }
-.wrap { max-width:900px; margin:0 auto; }
-h2 {
-  font-family:"Reem Kufi",sans-serif;
-  font-size:clamp(28px,5vw,44px);
-  margin:0 0 14px;
-  font-weight:700;
-}
-.lead { color:var(--mute); max-width:640px; margin:0 0 40px; }
-.fields {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:0;
-  border-block:1px solid var(--line);
-}
-.fields div { padding:26px 22px; border-inline-start:1px solid var(--line); }
-.fields div:first-child { border-inline-start:0; }
-.fields b {
-  display:block;
-  font-family:"Reem Kufi",sans-serif;
-  font-size:22px;
-  color:var(--glow);
-  margin-bottom:4px;
-}
-.fields p { margin:0; color:var(--mute); font-size:15.5px; line-height:1.7; }
-#ask { background:linear-gradient(180deg,var(--bg),var(--bg2) 40%,var(--bg)); }
-.chat {
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:22px;
-  backdrop-filter:blur(8px);
-  overflow:hidden;
-  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 60px rgba(79,227,208,.07);
-}
-.chat-head {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:14px 20px;
-  border-bottom:1px solid var(--line);
-  font-family:"Reem Kufi",sans-serif;
-}
-.dot {
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:var(--glow);
-  box-shadow:0 0 12px var(--glow);
-  animation:pulse 2s infinite;
-}
-@keyframes pulse { 50% { opacity:.35; } }
-#log {
-  height:min(58vh,520px);
-  min-height:240px;
-  overflow-y:auto;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  overscroll-behavior:contain;
-}
-.m {
-  max-width:88%;
-  padding:12px 16px;
-  border-radius:16px;
-  font-size:16.5px;
-  line-height:1.85;
-  overflow-wrap:anywhere;
-}
-.m.u {
-  align-self:flex-start;
-  background:rgba(255,179,71,.14);
-  border:1px solid rgba(255,179,71,.3);
-}
-.m.a {
-  align-self:flex-end;
-  background:rgba(79,227,208,.07);
-  border:1px solid var(--line);
-}
-.m p { margin:0 0 .6em; }
-.m p:last-child { margin:0; }
-.m strong { color:var(--glow); }
-.m.err { border-color:rgba(255,120,100,.5); color:#ffb9ad; }
-.chips { display:flex; flex-wrap:wrap; gap:8px; padding:0 20px 14px; }
-.chip {
-  background:transparent;
-  color:var(--ink);
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:7px 14px;
-  font-size:14.5px;
-  cursor:pointer;
-  transition:border-color .2s,color .2s;
-}
-.chip:hover { border-color:var(--glow); color:var(--glow); }
-.chip:disabled { opacity:.5; cursor:wait; }
-.in {
-  display:flex;
-  gap:10px;
-  padding:14px;
-  border-top:1px solid var(--line);
-  align-items:flex-end;
-}
-textarea {
-  flex:1;
-  min-width:0;
-  resize:none;
-  background:rgba(0,0,0,.3);
-  color:var(--ink);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:12px 14px;
-  font-size:16.5px;
-  max-height:140px;
-  min-height:48px;
-  line-height:1.6;
-}
-textarea::placeholder { color:#6a808a; }
-textarea:disabled { opacity:.65; }
-.send { padding:12px 24px; font-size:16px; white-space:nowrap; }
-.note { font-size:13.5px; color:var(--mute); margin-top:18px; }
-footer {
-  padding:40px 22px 60px;
-  padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));
-  text-align:center;
-  color:var(--mute);
-  font-size:14.5px;
-  border-top:1px solid var(--line);
-}
-footer strong { color:var(--amber); }
-.dots i {
-  display:inline-block;
-  width:6px;
-  height:6px;
-  margin:0 2px;
-  border-radius:50%;
-  background:var(--glow);
-  animation:pulse 1s infinite;
-}
-.dots i:nth-child(2) { animation-delay:.2s; }
-.dots i:nth-child(3) { animation-delay:.4s; }
-.about { background:linear-gradient(180deg,var(--bg),var(--bg2)); }
-.about-grid {
-  display:grid;
-  grid-template-columns:1.1fr 1fr;
-  gap:48px;
-  align-items:start;
-}
-.name {
-  font-family:"Reem Kufi",sans-serif;
-  font-size:clamp(34px,6vw,56px);
-  line-height:1.2;
-  margin:0 0 6px;
-  font-weight:700;
-}
-.name small {
-  display:block;
-  font-family:"Syne",sans-serif;
-  font-size:.42em;
-  color:var(--glow);
-  direction:ltr;
-  text-align:right;
-  letter-spacing:.02em;
-}
-.roles { list-style:none; margin:24px 0 0; padding:0; }
-.roles li { padding:14px 0; border-top:1px solid var(--line); font-size:18px; }
-.roles li:last-child { border-bottom:1px solid var(--line); }
-.contact h3 {
-  font-family:"Reem Kufi",sans-serif;
-  font-size:24px;
-  margin:0 0 16px;
-}
-.links { display:flex; flex-direction:column; gap:10px; margin-bottom:28px; }
-.lk {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  padding:14px 18px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  text-decoration:none;
-  background:var(--card);
-  transition:border-color .2s,transform .2s;
-}
-.lk:hover { border-color:var(--glow); transform:translateX(-4px); }
-.lk b { font-weight:500; }
-.lk span { color:var(--mute); font-size:14px; }
-.cn { display:grid; gap:6px; color:var(--mute); }
-.cn a {
-  color:var(--ink);
-  font-size:19px;
-  direction:ltr;
-  text-align:right;
-  text-decoration:none;
-  border-bottom:1px dashed var(--line);
-  width:fit-content;
-  overflow-wrap:anywhere;
-}
-.cn a:hover { color:var(--amber); }
-
-@media(max-width:760px) {
-  .about-grid { grid-template-columns:1fr; gap:34px; }
-}
-@media(max-width:560px) {
-  .fields div { border-inline-start:0; border-top:1px solid var(--line); }
-  .fields div:first-child { border-top:0; }
-  .m { max-width:96%; }
-  .in { gap:8px; padding:10px; }
-  .send { padding:12px 16px; }
-  #log { padding:14px; }
-}
-@media(prefers-reduced-motion:reduce) {
-  *,*::before,*::after {
-    animation-duration:.01ms!important;
-    animation-delay:0s!important;
-    scroll-behavior:auto!important;
-  }
-}
+:root{color-scheme:dark;--bg:#050b12;--bg2:#0a1622;--ink:#e8f1f2;--mute:#8fa5ad;--glow:#4fe3d0;--amber:#ffb347;--line:rgba(120,200,210,.16);--card:rgba(12,26,38,.82);box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tajawal,system-ui,sans-serif;line-height:1.8;font-size:17px}
+a{color:inherit}
+.hero{position:relative;min-height:92svh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden;padding:90px 22px}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 20%,rgba(2,5,9,.85) 100%);pointer-events:none}
+.hero-in{position:relative;z-index:1;max-width:860px}
+.logo{font-family:Syne,sans-serif;font-weight:800;font-size:clamp(46px,13vw,110px);line-height:1;margin:0;direction:ltr;background:linear-gradient(180deg,#fff 20%,var(--glow) 130%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 25px rgba(79,227,208,.3))}
+.tag{font-family:'Reem Kufi',sans-serif;font-size:clamp(22px,4.6vw,40px);margin:22px 0 10px}
+.sub{color:var(--mute);max-width:560px;margin:0 auto 30px}
+.btn{display:inline-block;background:var(--amber);color:#1a1005;font-weight:700;font-family:inherit;font-size:18px;padding:13px 28px;border:0;border-radius:999px;cursor:pointer;text-decoration:none;transition:transform .2s,opacity .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn:disabled{opacity:.55;cursor:wait;transform:none}
+.hint{position:absolute;bottom:25px;z-index:1;color:var(--mute);font-size:14px}
+section{padding:76px 22px}
+.wrap{max-width:900px;margin:0 auto}
+h2{font-family:'Reem Kufi',sans-serif;font-size:clamp(28px,5vw,42px);margin:0 0 14px}
+.lead{color:var(--mute);max-width:640px;margin:0 0 34px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border-block:1px solid var(--line)}
+.fields div{padding:24px 20px;border-inline-start:1px solid var(--line)}
+.fields b{display:block;font-family:'Reem Kufi',sans-serif;font-size:21px;color:var(--glow)}
+.fields p{margin:0;color:var(--mute);font-size:15.5px}
+#ask{background:linear-gradient(180deg,var(--bg),var(--bg2) 40%,var(--bg))}
+.chat{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.chat-head{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);font-family:'Reem Kufi',sans-serif}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--glow);box-shadow:0 0 12px var(--glow)}
+#status{margin-right:auto;color:var(--mute);font:500 13px Tajawal,sans-serif}
+.status-error{color:#ffb9ad!important}
+#log{height:min(58vh,520px);min-height:240px;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.m{max-width:92%;padding:12px 16px;border-radius:16px;font-size:16.5px;line-height:1.85;overflow-wrap:anywhere;white-space:pre-wrap}
+.m.u{align-self:flex-start;background:rgba(255,179,71,.14);border:1px solid rgba(255,179,71,.3)}
+.m.a{align-self:flex-end;background:rgba(79,227,208,.07);border:1px solid var(--line)}
+.m.err{border-color:rgba(255,120,100,.5);color:#ffb9ad}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 14px}
+.chip{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer}
+.chip:hover{border-color:var(--glow);color:var(--glow)}
+.in{display:flex;gap:10px;padding:14px;border-top:1px solid var(--line);align-items:flex-end}
+textarea{flex:1;min-width:0;resize:none;background:rgba(0,0,0,.3);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;font-size:16.5px;max-height:140px;min-height:48px}
+textarea::placeholder{color:#6a808a}
+.send{padding:12px 24px;font-size:16px;white-space:nowrap}
+.note{font-size:13.5px;color:var(--mute);margin-top:18px}
+.about{background:linear-gradient(180deg,var(--bg),var(--bg2))}
+.about-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:42px;align-items:start}
+.name{font-family:'Reem Kufi',sans-serif;font-size:clamp(34px,6vw,56px);line-height:1.2;margin:0 0 6px}
+.name small{display:block;font-family:Syne,sans-serif;font-size:.42em;color:var(--glow);direction:ltr;text-align:right}
+.roles{list-style:none;margin:24px 0 0;padding:0}
+.roles li{padding:13px 0;border-top:1px solid var(--line)}
+.contact h3{font-family:'Reem Kufi',sans-serif;font-size:23px;margin:0 0 14px}
+.links{display:flex;flex-direction:column;gap:10px;margin-bottom:25px}
+.lk{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;background:var(--card)}
+.lk span{color:var(--mute);font-size:14px}
+.cn{display:grid;gap:6px;color:var(--mute)}
+.cn a{color:var(--ink);font-size:18px;direction:ltr;text-align:right;text-decoration:none;width:fit-content}
+footer{padding:35px 22px 55px;text-align:center;color:var(--mute);font-size:14px;border-top:1px solid var(--line)}
+footer strong{color:var(--amber)}
+@media(max-width:760px){.about-grid{grid-template-columns:1fr;gap:30px}.fields div{border-inline-start:0;border-top:1px solid var(--line)}.fields div:first-child{border-top:0}.in{gap:8px;padding:10px}.send{padding:12px 18px}.m{max-width:97%}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 </head>
-
 <body>
-<div class="grain" aria-hidden="true"></div>
-
 <header class="hero">
-  <canvas id="cv" aria-hidden="true"></canvas>
-  <div class="vig"></div>
+<canvas id="cv" aria-hidden="true"></canvas>
+<div class="vig"></div>
+<div class="hero-in">
+<h1 class="logo">Elinfection</h1>
+<p class="tag">العدوى بتتحرك. إنت أسرع منها.</p>
+<p class="sub">مساعد ذكاء اصطناعي متخصص في مكافحة العدوى والأمراض المعدية والتعقيم والصحة العامة. اسأل في أي وقت وخد إجابة واضحة ومنظمة.</p>
+<a class="btn" href="#ask">اسأل Elinfection</a>
+</div>
+<div class="hint">مساعدك الذكي لمكافحة العدوى</div>
+</header>
 
-  <div class="hero-in">
-    <h1 class="logo" aria-label="Elinfection"></h1>
-    <p class="tag">العدوى بتتحرك. إنت أسرع منها.</p>
-    <p class="sub">مساعد ذكاء اصطناعي متخصص في مكافحة العدوى والأمراض المعدية والمجال الطبي. اسأل في أي وقت، وخد إجابة واضحة ومنظمة.</p>
+<section>
+<div class="wrap">
+<h2>اسأل في أي حاجة طبية</h2>
+<p class="lead">من غسل الإيدين لحد بروتوكولات العناية المركزة، ومن الوقاية لحد مكافحة العدوى.</p>
+<div class="fields">
+<div><b>مكافحة العدوى</b><p>التعقيم والتطهير، النظافة الشخصية، العزل وبروتوكولات المستشفيات.</p></div>
+<div><b>الأمراض المعدية</b><p>طرق الانتقال والوقاية وعلامات الخطر ومتى تحتاج لمساعدة طبية.</p></div>
+<div><b>الأدوية والتحاليل</b><p>معلومات توعوية عن المضادات الحيوية واللقاحات والتحاليل.</p></div>
+<div><b>الصحة العامة</b><p>معلومات صحية مبسطة مبنية على إرشادات موثوقة.</p></div>
+</div>
+</div>
+</section>
+
+<section id="ask">
+<div class="wrap">
+<h2>غرفة العمليات</h2>
+<p class="lead">اكتب سؤالك واضغط إرسال. لو حصل خطأ هتظهر لك رسالة توضح السبب.</p>
+<div class="chat">
+<div class="chat-head"><span class="dot"></span> Elinfection AI <span id="status" role="status">جاهز لاستقبال سؤالك</span></div>
+<div id="log" aria-live="polite">
+<div class="m a">أهلاً بيك. أنا Elinfection، مساعدك في مكافحة العدوى والمجال الطبي. اسأل عن أي مرض أو أعراض أو طريقة وقاية أو تعقيم.</div>
+</div>
+<div class="chips" id="chips"></div>
+<div class="in">
+<textarea id="q" rows="1" placeholder="اكتب سؤالك الطبي هنا…" aria-label="سؤالك"></textarea>
+<button class="btn send" id="go" type="button">إرسال</button>
+</div>
+</div>
+<p class="note">المعلومات للتوعية فقط ولا تغني عن استشارة الطبيب.</p>
+</div>
+</section>
+
+<section class="about" id="about">
+<div class="wrap about-grid">
+<div>
+<h2>صاحب الموقع</h2>
+<p class="name">زياد سالم<small>Ziad Salem</small></p>
+<ul class="roles">
+<li>مدير التدريب بمؤسسة علوم الصحة للرعاية الصحية</li>
+<li>محاضر مكافحة العدوى</li>
+<li>مدرب إسعافات أولية</li>
+<li>محاضر مكافحة العدوى بنقابة المهن الطبية</li>
+<li>صاحب قنوات Elinfection على السوشيال ميديا</li>
+</ul>
+</div>
+<div class="contact">
+<h3>تابع قنوات Elinfection</h3>
+<div class="links">
+<a class="lk" href="https://whatsapp.com/channel/0029VbCU1wn8vd1UIG4nFt29" target="_blank" rel="noopener"><b>قناة واتساب</b><span>انضم للقناة</span></a>
+<a class="lk" href="https://www.facebook.com/share/r/1CVuNsiJLj/" target="_blank" rel="noopener"><b>فيسبوك</b><span>شاهد المحتوى</span></a>
+<a class="lk" href="https://vt.tiktok.com/ZSgehShg2/" target="_blank" rel="noopener"><b>تيك توك</b><span>شاهد المحتوى</span></a>
+</div>
+<h3>للتواصل</h3>
+<div class="cn">
+<span>تليفون وواتساب</span><a href="tel:+201025134465">01025134465</a>
+<span>البريد الإلكتروني</span><a href="mailto:ziadsalem176@gmail.com">ziadsalem176@gmail.com</a>
+</div>
+</div>
+</div>
+</section>
+
+<footer>
+<p><strong>تنبيه:</strong> Elinfection لا يقدّم تشخيصًا ولا علاجًا. في الحالات الطارئة اتصل بالإسعاف (123 في مصر) أو توجه لأقرب طوارئ.</p>
+<p dir="ltr">© Elinfection · Ziad Salem</p>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+const log=document.getElementById('log');
+const q=document.getElementById('q');
+const go=document.getElementById('go');
+const chips=document.getElementById('chips');
+const status=document.getElementById('status');
+
+const SYSTEM_PROMPT='أنت Elinfection AI، مساعد متخصص في مكافحة العدوى والأمراض المعدية والتعقيم والتطهير والصحة العامة والمعلومات الطبية. أجب بلغة السائل، واستخدم العربية المصرية البسيطة عند السؤال بالعربية. نظّم الإجابة في نقاط واضحة وابدأ بالخلاصة. اشرح المصطلحات الطبية الإنجليزية عند الحاجة. اعتمد على الإرشادات الموثوقة مثل WHO وCDC، ولا تخترع مصادر. لا تدّع تشخيص المريض ولا تصف علاجًا شخصيًا أو جرعات مخصصة. وضح علامات الخطر ومتى يجب طلب المساعدة الطبية. في الطوارئ وجّه السائل إلى الإسعاف 123 في مصر. المعلومات للتوعية ولا تغني عن استشارة الطبيب.';
+
+let history=[];
+let busy=false;
+
+function addMessage(type,text){
+const el=document.createElement('div');
+el.className='m '+type;
+el.textContent=String(text);
+log.appendChild(el);
+log.scrollTop=log.scrollHeight;
+return el;
+}
+
+function setStatus(text,isError){
+status.textContent=text;
+status.classList.toggle('status-error',!!isError);
+}
+
+const suggestions=[
+'اللحظات الخمس لنظافة اليدين',
+'الفرق بين التعقيم والتطهير',
+'إزاي أمنع انتقال العدوى في البيت؟',
+'إمتى أحتاج مضاد حيوي؟'
+];
+
+suggestions.forEach(text=>{
+const b=document.createElement('button');
+b.type='button';
+b.className='chip';
+b.textContent=text;
+b.addEventListener('click',()=>{
+if(busy)return;
+q.value=text;
+send();
+});
+chips.appendChild(b);
+});
+
+async function send(){
+const question=q.value.trim();
+if(!question||busy)return;
+
+busy=true;
+go.disabled=true;
+q.disabled=true;
+chips.style.display='none';
+
+addMessage('u',question);
+q.value='';
+q.style.height='';
+
+const loading=addMessage('a','جاري تجهيز الإجابة...');
+setStatus('بيتم إرسال السؤال…',false);
+
+const previous=history.slice();
+history.push({role:'user',content:question});
+
+const controller=new AbortController();
+const timeout=setTimeout(()=>controller.abort(),45000);
+
+try{
+const response=await fetch('/api/chat',{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Accept':'application/json'
+},
+body:JSON.stringify({
+system:SYSTEM_PROMPT,
+messages:history.slice(-12)
+}),
+signal:controller.signal
+});
+
+const raw=await response.text();
+let data;
+
+try{
+data=JSON.parse(raw);
+}catch(e){
+throw new Error('الخادم رجّع ردًا غير مفهوم. تأكد أن ملف api/chat.js منشور على Vercel.');
+}
+
+if(!response.ok){
+throw new Error(data.error||('حصل خطأ من الخادم (HTTP '+response.status+').'));
+}
+
+if(!data||typeof data.reply!=='string'||!data.reply.trim()){
+throw new Error('الخادم لم يرجع إجابة. راجع سجلات Vercel.');
+}
+
+const answer=data.reply.trim();
+loading.textContent=answer;
+
+history.push({role:'assistant',content:answer});
+history=history.slice(-12);
+
+setStatus('تم استلام الإجابة',false);
+
+}catch(err){
+history=previous;
+loading.classList.add('err');
+
+if(err.name==='AbortError'){
+loading.textContent='الطلب استغرق أكثر من 45 ثانية. تأكد من إعداد OPENAI_API_KEY وراجع سجلات Vercel.';
+}else if(!navigator.onLine){
+loading.textContent='مفيش اتصال بالإنترنت. اتأكد من الاتصال وجرب تاني.';
+}else{
+loading.textContent=err.message||'حصل خطأ غير معروف. حاول مرة أخرى.';
+}
+
+setStatus('تعذر إكمال الطلب',true);
+console.error('Elinfection chat error:',err);
+
+}finally{
+clearTimeout(timeout);
+busy=false;
+go.disabled=false;
+q.disabled=false;
+q.focus();
+log.scrollTop=log.scrollHeight;
+}
+}
+
+go.addEventListener('click',send);
+
+q.addEventListener('keydown',e=>{
+if(e.key==='Enter'&&!e.shiftKey){
+e.preventDefault();
+send();
+}
+});
+
+q.addEventListener('input',()=>{
+q.style.height='auto';
+q.style.height=Math.min(q.scrollHeight,140)+'px';
+});
+})();
+
+// خلفية الميكروبات المتحركة
+(function(){
+const cv=document.getElementById('cv');
+if(!cv)return;
+
+const c=cv.getContext('2d');
+let w=0,h=0;
+let dpr=Math.min(window.devicePixelRatio||1,2);
+let particles=[];
+
+function resize(){
+w=cv.clientWidth;
+h=cv.clientHeight;
+cv.width=w*dpr;
+cv.height=h*dpr;
+c.setTransform(dpr,0,0,dpr,0,0);
+
+particles=Array.from({
+length:Math.min(45,Math.floor(w*h/18000)+15)
+},()=>({
+x:Math.random()*w,
+y:Math.random()*h,
+r:5+Math.random()*15,
+vx:(Math.random()-.5)*.25,
+vy:(Math.random()-.5)*.25,
+hue:Math.random()<.3?'255,179,71':'79,227,208'
+}));
+}
+
+function draw(){
+c.clearRect(0,0,w,h);
+
+particles.forEach(p=>{
+p.x+=p.vx;
+p.y+=p.vy;
+
+if(p.x<-25)p.x=w+25;
+if(p.x>w+25)p.x=-25;
+if(p.y<-25)p.y=h+25;
+if(p.y>h+25)p.y=-25;
+
+c.strokeStyle='rgba('+p.hue+',.55)';
+c.lineWidth=1;
+c.beginPath();
+c.arc(p.x,p.y,p.r,0,Math.PI*2);
+c.stroke();
+
+for(let i=0;i<7;i++){
+const a=i*Math.PI*2/7;
+c.beginPath();
+c.moveTo(p.x+Math.cos(a)*p.r,p.y+Math.sin(a)*p.r);
+c.lineTo(p.x+Math.cos(a)*(p.r+6),p.y+Math.sin(a)*(p.r+6));
+c.stroke();
+}
+});
+
+requestAnimationFrame(draw);
+}
+
+resize();
+window.addEventListener('resize',resize);
+draw();
+})();
+</script>
+</body>
+</html>
+أمراض المعدية والمجال الطبي. اسأل في أي وقت، وخد إجابة واضحة ومنظمة.</p>
     <div class="cta">
       <a class="btn" href="#ask">اسأل Elinfection</a>
     </div>
