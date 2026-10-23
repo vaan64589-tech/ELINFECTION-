@@ -72,6 +72,7 @@ footer strong{color:var(--amber)}
 </style>
 </head>
 <body>
+
 <header class="hero">
 <canvas id="cv" aria-hidden="true"></canvas>
 <div class="vig"></div>
@@ -161,6 +162,231 @@ const chips=document.getElementById('chips');
 const status=document.getElementById('status');
 
 const SYSTEM_PROMPT='أنت Elinfection AI، مساعد متخصص في مكافحة العدوى والأمراض المعدية والتعقيم والتطهير والصحة العامة والمعلومات الطبية. أجب بلغة السائل، واستخدم العربية المصرية البسيطة عند السؤال بالعربية. نظّم الإجابة في نقاط واضحة وابدأ بالخلاصة. اشرح المصطلحات الطبية الإنجليزية عند الحاجة. اعتمد على الإرشادات الموثوقة مثل WHO وCDC، ولا تخترع مصادر. لا تدّع تشخيص المريض ولا تصف علاجًا شخصيًا أو جرعات مخصصة. وضح علامات الخطر ومتى يجب طلب المساعدة الطبية. في الطوارئ وجّه السائل إلى الإسعاف 123 في مصر. المعلومات للتوعية ولا تغني عن استشارة الطبيب.';
+
+let history=[];
+let busy=false;
+
+function addMessage(type,text){
+const el=document.createElement('div');
+el.className='m '+type;
+el.textContent=String(text);
+log.appendChild(el);
+log.scrollTop=log.scrollHeight;
+return el;
+}
+
+function setStatus(text,isError){
+status.textContent=text;
+status.classList.toggle('status-error',!!isError);
+}
+
+function getErrorMessage(data,fallback){
+if(typeof data==='string'&&data.trim())return data;
+if(data&&typeof data==='object'){
+if(typeof data.error==='string'&&data.error.trim())return data.error;
+if(data.error&&typeof data.error==='object'){
+if(typeof data.error.message==='string')return data.error.message;
+if(typeof data.error.details==='string')return data.error.details;
+}
+if(typeof data.message==='string')return data.message;
+}
+return fallback;
+}
+
+[
+'اللحظات الخمس لنظافة اليدين',
+'الفرق بين التعقيم والتطهير',
+'إزاي أمنع انتقال العدوى في البيت؟',
+'إمتى أحتاج مضاد حيوي؟'
+].forEach(text=>{
+const b=document.createElement('button');
+b.type='button';
+b.className='chip';
+b.textContent=text;
+b.addEventListener('click',()=>{
+if(busy)return;
+q.value=text;
+send();
+});
+chips.appendChild(b);
+});
+
+async function send(){
+const question=q.value.trim();
+if(!question||busy)return;
+
+busy=true;
+go.disabled=true;
+q.disabled=true;
+chips.style.display='none';
+
+addMessage('u',question);
+q.value='';
+q.style.height='';
+
+const loading=addMessage('a','جاري تجهيز الإجابة...');
+setStatus('بيتم إرسال السؤال…',false);
+
+const previous=history.slice();
+history.push({role:'user',content:question});
+
+const controller=new AbortController();
+const timeout=setTimeout(()=>controller.abort(),45000);
+
+try{
+const response=await fetch('/api/chat',{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'Accept':'application/json'
+},
+body:JSON.stringify({
+system:SYSTEM_PROMPT,
+messages:history.slice(-12)
+}),
+signal:controller.signal
+});
+
+const raw=await response.text();
+let data=null;
+
+try{
+data=raw?JSON.parse(raw):null;
+}catch(parseError){
+throw new Error(
+'الخادم لم يرجع JSON صالحًا. تأكد من نشر ملف api/chat.js. رمز HTTP: '+response.status
+);
+}
+
+if(!response.ok){
+throw new Error(getErrorMessage(
+data,
+'فشل الطلب. رمز HTTP: '+response.status
+));
+}
+
+if(!data||typeof data.reply!=='string'||!data.reply.trim()){
+throw new Error(getErrorMessage(
+data,
+'الخادم لم يرجع إجابة نصية. راجع سجلات Vercel.'
+));
+}
+
+const answer=data.reply.trim();
+loading.textContent=answer;
+
+history.push({role:'assistant',content:answer});
+history=history.slice(-12);
+
+setStatus('تم استلام الإجابة',false);
+
+}catch(err){
+history=previous;
+loading.classList.add('err');
+
+if(err.name==='AbortError'){
+loading.textContent='انتهت مهلة الانتظار بعد 45 ثانية. افحص سجلات Vercel وتأكد من إعداد مفتاح API.';
+}else if(!navigator.onLine){
+loading.textContent='لا يوجد اتصال بالإنترنت. اتصل بالإنترنت ثم حاول مجددًا.';
+}else{
+loading.textContent=String(err.message||'حدث خطأ غير معروف. حاول مرة أخرى.');
+}
+
+setStatus('تعذر إكمال الطلب',true);
+console.error('Elinfection chat error:',err);
+
+}finally{
+clearTimeout(timeout);
+busy=false;
+go.disabled=false;
+q.disabled=false;
+q.focus();
+log.scrollTop=log.scrollHeight;
+}
+}
+
+go.addEventListener('click',send);
+
+q.addEventListener('keydown',e=>{
+if(e.key==='Enter'&&!e.shiftKey){
+e.preventDefault();
+send();
+}
+});
+
+q.addEventListener('input',()=>{
+q.style.height='auto';
+q.style.height=Math.min(q.scrollHeight,140)+'px';
+});
+})();
+
+// خلفية الميكروبات المتحركة
+(function(){
+const cv=document.getElementById('cv');
+if(!cv)return;
+
+const c=cv.getContext('2d');
+let w=0,h=0;
+const dpr=Math.min(window.devicePixelRatio||1,2);
+let particles=[];
+
+function resize(){
+w=cv.clientWidth;
+h=cv.clientHeight;
+cv.width=w*dpr;
+cv.height=h*dpr;
+c.setTransform(dpr,0,0,dpr,0,0);
+
+particles=Array.from({
+length:Math.min(45,Math.floor(w*h/18000)+15)
+},()=>({
+x:Math.random()*w,
+y:Math.random()*h,
+r:5+Math.random()*15,
+vx:(Math.random()-.5)*.25,
+vy:(Math.random()-.5)*.25,
+hue:Math.random()<.3?'255,179,71':'79,227,208'
+}));
+}
+
+function draw(){
+c.clearRect(0,0,w,h);
+
+particles.forEach(p=>{
+p.x+=p.vx;
+p.y+=p.vy;
+
+if(p.x<-25)p.x=w+25;
+if(p.x>w+25)p.x=-25;
+if(p.y<-25)p.y=h+25;
+if(p.y>h+25)p.y=-25;
+
+c.strokeStyle='rgba('+p.hue+',.55)';
+c.lineWidth=1;
+c.beginPath();
+c.arc(p.x,p.y,p.r,0,Math.PI*2);
+c.stroke();
+
+for(let i=0;i<7;i++){
+const a=i*Math.PI*2/7;
+c.beginPath();
+c.moveTo(p.x+Math.cos(a)*p.r,p.y+Math.sin(a)*p.r);
+c.lineTo(p.x+Math.cos(a)*(p.r+6),p.y+Math.sin(a)*(p.r+6));
+c.stroke();
+}
+});
+
+requestAnimationFrame(draw);
+}
+
+resize();
+window.addEventListener('resize',resize);
+draw();
+})();
+</script>
+</body>
+</html>
+عاف 123 في مصر. المعلومات للتوعية ولا تغني عن استشارة الطبيب.';
 
 let history=[];
 let busy=false;
