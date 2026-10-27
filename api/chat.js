@@ -1,170 +1,125 @@
 
-module.exports = async function (req, res) {
-  res.setHeader("Cache-Control", "no-store");
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-
+export default async function handler(req, res) {
+  // Allow POST requests only
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({
-      error: "طريقة الطلب غير مسموح بها. استخدم POST."
+      error: "الطريقة غير مسموح بها. استخدم POST."
     });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey || !apiKey.trim()) {
+  if (!apiKey) {
     return res.status(500).json({
-      error: "مفتاح OpenAI غير مضبوط. أضف OPENAI_API_KEY في إعدادات Vercel."
+      error: "مفتاح Gemini غير مضبوط في إعدادات Vercel."
     });
   }
 
   try {
     const body = req.body || {};
-    const system = body.system;
-    const messages = body.messages;
+    const messages = Array.isArray(body.messages)
+      ? body.messages
+      : [];
 
-    if (
-      typeof system !== "string" ||
-      !system.trim() ||
-      !Array.isArray(messages) ||
-      messages.length === 0 ||
-      messages.length > 12
-    ) {
+    const systemPrompt =
+      typeof body.system === "string" && body.system.trim()
+        ? body.system
+        : `أنت Elinfection، مساعد ذكي متخصص في مكافحة العدوى
+والوقاية منها والتثقيف الصحي.
+أجب باللغة العربية الواضحة، ويفضل اللهجة المصرية عند ملاءمتها.
+قدّم معلومات طبية دقيقة وآمنة، وميّز بين التثقيف العام
+والتشخيص الطبي. لا تخترع معلومات أو مراجع.
+في حالات الطوارئ، وجّه المستخدم لطلب المساعدة الطبية فورًا.
+لا تطلب بيانات تعريفية للمرضى ولا تدّعِ أنك بديل للطبيب.`;
+
+    const contents = messages
+      .filter(
+        (m) =>
+          m &&
+          typeof m.content === "string" &&
+          ["user", "assistant", "model"].includes(m.role)
+      )
+      .map((m) => ({
+        role: m.role === "user" ? "user" : "model",
+        parts: [{ text: m.content }]
+      }))
+      .filter((m) => m.parts[0].text.trim().length > 0);
+
+    if (contents.length === 0) {
       return res.status(400).json({
-        error: "بيانات السؤال غير صالحة. حاول إرسال السؤال مرة أخرى."
+        error: "اكتب رسالتك أولًا."
       });
     }
 
-    const input = [];
-
-    for (const message of messages) {
-      if (
-        !message ||
-        !["user", "assistant"].includes(message.role) ||
-        typeof message.content !== "string" ||
-        !message.content.trim()
-      ) {
-        return res.status(400).json({
-          error: "يوجد خطأ في بيانات المحادثة."
-        });
-      }
-
-      input.push({
-        role: message.role,
-        content: message.content.slice(0, 6000)
-      });
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 40000);
-
-    let aiResponse;
-
-    try {
-      aiResponse = await fetch(
-        "https://api.openai.com/v1/responses",
-        {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + apiKey,
-            "Content-Type": "application/json"
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
           },
-          body: JSON.stringify({
-            model: "gpt-4.1-mini",
-            instructions: system.slice(0, 5000),
-            input: input,
-            max_output_tokens: 1200
-          }),
-          signal: controller.signal
-        }
-      );
-    } finally {
-      clearTimeout(timeout);
-    }
+          contents,
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 2048
+          }
+        })
+      }
+    );
 
-    let result;
+    const data = await response.json();
 
-    try {
-      result = await aiResponse.json();
-    } catch {
-      console.error("OpenAI returned an invalid response.");
-
-      return res.status(502).json({
-        error: "وصل رد غير مفهوم من خدمة الذكاء الاصطناعي."
-      });
-    }
-
-    if (!aiResponse.ok) {
+    if (!response.ok) {
       console.error(
-        "OpenAI API error:",
-        aiResponse.status,
-        result.error?.message || "Unknown error"
+        "Gemini API error:",
+        response.status,
+        data?.error?.message || "Unknown error"
       );
 
-      if (aiResponse.status === 401) {
-        return res.status(502).json({
-          error: "مفتاح OpenAI غير صالح. راجع إعدادات OPENAI_API_KEY."
+      if (response.status === 429) {
+        return res.status(429).json({
+          error:
+            "وصلنا لحد الاستخدام المؤقت للمساعد. انتظر قليلًا ثم حاول مرة أخرى."
         });
       }
 
-      if (aiResponse.status === 429) {
+      if (response.status === 401 || response.status === 403) {
         return res.status(502).json({
-          error: "تم تجاوز حد الاستخدام أو الرصيد المتاح في حساب API. راجع الفوترة وحدود الاستخدام."
-        });
-      }
-
-      if (aiResponse.status === 403) {
-        return res.status(502).json({
-          error: "حساب API لا يملك صلاحية تنفيذ الطلب. راجع صلاحيات الحساب."
+          error:
+            "مفتاح Gemini غير صالح أو لا يملك صلاحية الاستخدام. راجع إعدادات Vercel."
         });
       }
 
       return res.status(502).json({
-        error: "خدمة الذكاء الاصطناعي لم تقبل الطلب. حاول مرة أخرى لاحقًا."
+        error:
+          "حصلت مشكلة في الاتصال بخدمة Gemini. حاول مرة أخرى لاحقًا."
       });
     }
 
-    const reply = (result.output || [])
-      .filter(function (item) {
-        return item.type === "message";
-      })
-      .flatMap(function (item) {
-        return item.content || [];
-      })
-      .filter(function (item) {
-        return item.type === "output_text";
-      })
-      .map(function (item) {
-        return item.text || "";
-      })
-      .join("\n")
+    const reply = (data?.candidates?.[0]?.content?.parts || [])
+      .map((part) => part.text || "")
+      .join("")
       .trim();
 
     if (!reply) {
       return res.status(502).json({
-        error: "النموذج لم يُرجع نصًا. حاول صياغة السؤال بطريقة أخرى."
+        error:
+          "المساعد لم يُرجع إجابة. جرّب صياغة السؤال بطريقة مختلفة."
       });
     }
 
-    return res.status(200).json({
-      reply: reply
-    });
-
+    return res.status(200).json({ reply });
   } catch (error) {
-    console.error(
-      "Elinfection chat function error:",
-      error.name || "Error",
-      error.message || "Unknown error"
-    );
-
-    if (error.name === "AbortError") {
-      return res.status(504).json({
-        error: "استغرقت الاستجابة وقتًا طويلًا. حاول مرة أخرى."
-      });
-    }
+    console.error("Elinfection server error:", error.message);
 
     return res.status(500).json({
-      error: "حدث خطأ داخل الخادم أثناء معالجة السؤال. راجع سجلات Vercel."
+      error: "حصل خطأ داخلي. حاول مرة أخرى."
     });
   }
-};
+}
